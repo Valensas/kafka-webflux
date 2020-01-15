@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+    com.valensas.common.kafka.webflux.autoconfigure.KafkaDeserializerAutoConfiguration, \
+    com.valensas.common.kafka.webflux.autoconfigure.KafkaConsumerRegisterer
