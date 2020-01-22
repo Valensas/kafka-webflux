@@ -30,12 +30,15 @@ class KafkaConsumerRegisterer(
                 .concatMap { record ->
                     consumer
                         .invoke(record)
+                        .retry()
                         .map { record }
                 }
                 .doOnNext {
                     it.receiverOffset().commit()
                 }
-                .subscribe()
+                .subscribe {
+                    print(it)
+                }
         }
     }
 

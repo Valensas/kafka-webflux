@@ -22,7 +22,7 @@ class KafkaDeserializerAutoConfiguration(
         consumers.forEach {
             val existingClass = topicMappings[it.topic]
             if (existingClass != null && existingClass != it.modelType) {
-                throw IllegalStateException("Topic ${it.topic} register with both $existingClass and ${it.modelType}")
+                throw IllegalStateException("Topic ${it.topic} registered with both $existingClass and ${it.modelType}")
             }
             topicMappings[it.topic] = it.modelType
         }
