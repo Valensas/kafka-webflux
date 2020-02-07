@@ -5,6 +5,7 @@ import com.valensas.common.kafka.webflux.deserializer.KafkaModelDeserializer
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Configuration
 import reactor.core.publisher.Flux
+import reactor.core.publisher.toFlux
 import reactor.kafka.receiver.KafkaReceiver
 import reactor.kafka.receiver.ReceiverOptions
 import reactor.kafka.receiver.ReceiverRecord
@@ -30,15 +31,14 @@ class KafkaConsumerRegisterer(
                 .concatMap { record ->
                     consumer
                         .invoke(record)
+                        .toFlux()
                         .retry()
                         .map { record }
                 }
                 .doOnNext {
                     it.receiverOffset().commit()
                 }
-                .subscribe {
-                    print(it)
-                }
+                .subscribe()
         }
     }
 
