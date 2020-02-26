@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.deserializer.KafkaModelDeserializer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import kotlin.reflect.KClass
 
 @Configuration
+@ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["bootstrap-servers"])
 class KafkaDeserializerAutoConfiguration(
     private val consumers: List<KafkaConsumerDescriptor>,
     private val objectMapper: ObjectMapper

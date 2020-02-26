@@ -2,6 +2,8 @@ package com.valensas.common.kafka.webflux.autoconfigure
 
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.deserializer.KafkaModelDeserializer
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Configuration
 import reactor.core.publisher.Flux
@@ -12,6 +14,7 @@ import reactor.kafka.receiver.ReceiverRecord
 import javax.annotation.PostConstruct
 
 @Configuration
+@ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["bootstrap-servers"])
 class KafkaConsumerRegisterer(
     private val kafkaProperties: KafkaProperties,
     private val consumers: List<KafkaConsumerDescriptor>,
