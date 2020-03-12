@@ -7,10 +7,10 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Configuration
 import reactor.core.publisher.Flux
-import reactor.core.publisher.toFlux
 import reactor.kafka.receiver.KafkaReceiver
 import reactor.kafka.receiver.ReceiverOptions
 import reactor.kafka.receiver.ReceiverRecord
+import reactor.kotlin.core.publisher.toFlux
 import javax.annotation.PostConstruct
 
 @Configuration
@@ -31,12 +31,13 @@ class KafkaConsumerRegisterer(
                 .subscription(listOf(consumer.topic))
 
             stream(receiverOptions)
-                .concatMap { record ->
+                .flatMap { record ->
                     consumer
                         .invoke(record)
                         .toFlux()
                         .retry()
                         .map { record }
+                        .switchIfEmpty(Flux.just(record))
                 }
                 .doOnNext {
                     it.receiverOffset().commit()

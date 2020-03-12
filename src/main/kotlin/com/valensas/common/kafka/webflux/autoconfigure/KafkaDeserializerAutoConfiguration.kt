@@ -15,7 +15,6 @@ class KafkaDeserializerAutoConfiguration(
     private val consumers: List<KafkaConsumerDescriptor>,
     private val objectMapper: ObjectMapper
 ) {
-
     @Bean
     @ConditionalOnMissingBean
     fun kafkaDeserializer(): KafkaModelDeserializer {

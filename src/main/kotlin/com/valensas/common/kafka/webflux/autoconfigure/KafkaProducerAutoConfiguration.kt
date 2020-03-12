@@ -22,7 +22,7 @@ class KafkaProducerAutoConfiguration {
             .create<String, Any>(kafkaProperties.buildProducerProperties())
             .withValueSerializer(JsonSerializer(mapper))
 
-        return KafkaSender.create<String, Any>(properties)
+        return KafkaSender.create(properties)
     }
 
     @Bean
