@@ -1,10 +1,10 @@
 package com.valensas.common.kafka.webflux.deserializer
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlin.reflect.KClass
 import org.apache.kafka.common.serialization.Deserializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.reflect.KClass
 
 class KafkaModelDeserializer(
     private val mapper: ObjectMapper,
