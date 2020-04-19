@@ -7,6 +7,7 @@ import org.reactivestreams.Publisher
 class PayloadKafkaConsumerDescriptor<T : Any>(
     override val topic: String,
     override val modelType: KClass<T>,
+    override val concurrency: Int?,
     private val consumer: (T) -> Publisher<Unit>
 ) : KafkaConsumerDescriptor {
     @Suppress("UNCHECKED_CAST")

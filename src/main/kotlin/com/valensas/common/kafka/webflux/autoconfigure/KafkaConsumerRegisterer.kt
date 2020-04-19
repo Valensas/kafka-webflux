@@ -4,6 +4,7 @@ import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.deserializer.KafkaModelDeserializer
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
 import javax.annotation.PostConstruct
+import org.reactivestreams.Publisher
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Configuration
@@ -12,6 +13,12 @@ import reactor.kafka.receiver.KafkaReceiver
 import reactor.kafka.receiver.ReceiverOptions
 import reactor.kafka.receiver.ReceiverRecord
 import reactor.kotlin.core.publisher.toFlux
+
+private fun <T, R> Flux<T>.flatMapSequential(concurrency: Int?, mapper: (T) -> Publisher<R>): Flux<R> =
+    if (concurrency == null)
+        flatMapSequential(mapper)
+    else
+        flatMapSequential(mapper, concurrency)
 
 @Configuration
 @ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["bootstrap-servers"])
@@ -36,7 +43,7 @@ class KafkaConsumerRegisterer(
             }
 
             stream(customizedOptions)
-                .flatMap { record ->
+                .flatMapSequential(consumer.concurrency) { record ->
                     consumer
                         .invoke(record)
                         .toFlux()
