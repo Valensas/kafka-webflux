@@ -4,6 +4,7 @@ import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.deserializer.KafkaModelDeserializer
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
 import javax.annotation.PostConstruct
+import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.reactivestreams.Publisher
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
@@ -14,11 +15,11 @@ import reactor.kafka.receiver.ReceiverOptions
 import reactor.kafka.receiver.ReceiverRecord
 import reactor.kotlin.core.publisher.toFlux
 
-private fun <T, R> Flux<T>.flatMapSequential(concurrency: Int?, mapper: (T) -> Publisher<R>): Flux<R> =
-    if (concurrency == null)
+private fun <T, R> Flux<T>.flatMapSequential(concurrent: Boolean, mapper: (T) -> Publisher<R>): Flux<R> =
+    if (concurrent)
         flatMapSequential(mapper)
     else
-        flatMapSequential(mapper, concurrency)
+        flatMapSequential(mapper, 1)
 
 @Configuration
 @ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["bootstrap-servers"])
@@ -42,8 +43,15 @@ class KafkaConsumerRegisterer(
                 customizer.customize(options)
             }
 
-            stream(customizedOptions)
-                .flatMapSequential(consumer.concurrency) { record ->
+            subscribe(consumer, customizedOptions)
+        }
+    }
+
+    private fun subscribe(consumer: KafkaConsumerDescriptor, options: ReceiverOptions<String, Any>) {
+        stream(options)
+            .groupBy(ConsumerRecord<String, Any>::partition)
+            .flatMap { partitionFLux ->
+                partitionFLux.flatMapSequential(consumer.concurrent) { record ->
                     consumer
                         .invoke(record)
                         .toFlux()
@@ -51,11 +59,11 @@ class KafkaConsumerRegisterer(
                         .map { record }
                         .switchIfEmpty(Flux.just(record))
                 }
-                .doOnNext {
-                    it.receiverOffset().commit()
-                }
-                .subscribe()
-        }
+            }
+            .doOnNext {
+                it.receiverOffset().commit()
+            }
+            .subscribe()
     }
 
     private fun stream(options: ReceiverOptions<String, Any>): Flux<ReceiverRecord<String, Any>> =
