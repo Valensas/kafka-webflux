@@ -1,12 +1,12 @@
 package com.valensas.common.kafka.webflux.autoconfigure
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.common.kafka.webflux.producer.KafkaProducer
+import org.apache.kafka.common.serialization.Serializer
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.kafka.support.serializer.JsonSerializer
 import reactor.kafka.sender.KafkaSender
 import reactor.kafka.sender.SenderOptions
 
@@ -14,17 +14,19 @@ import reactor.kafka.sender.SenderOptions
 @ConditionalOnProperty(prefix = "spring.kafka.producer", name = ["bootstrap-servers"])
 class KafkaProducerAutoConfiguration {
     @Bean
+    @ConditionalOnMissingBean
     fun kafkaSender(
         kafkaProperties: KafkaProperties,
-        mapper: ObjectMapper
+        serializer: Serializer<Any>
     ): KafkaSender<String, Any> {
         val properties = SenderOptions
             .create<String, Any>(kafkaProperties.buildProducerProperties())
-            .withValueSerializer(JsonSerializer(mapper))
+            .withValueSerializer(serializer)
 
         return KafkaSender.create(properties)
     }
 
     @Bean
+    @ConditionalOnMissingBean
     fun kafkaProducer(sender: KafkaSender<String, *>) = KafkaProducer(sender)
 }

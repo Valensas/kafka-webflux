@@ -1,14 +1,11 @@
 package com.valensas.common.kafka.webflux.deserializer
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import kotlin.reflect.KClass
 import org.apache.kafka.common.serialization.Deserializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-class KafkaModelDeserializer(
-    private val mapper: ObjectMapper,
-    private val mappings: Map<String, KClass<*>>
+class CustomKafkaModelDeserializer(
+    private val mappings: Map<String, (ByteArray) -> Any>
 ) : Deserializer<Any> {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -18,8 +15,11 @@ class KafkaModelDeserializer(
         if (data == null) {
             return null
         }
-        logger.debug("Deserializing message from topic {}: {}", topic, String(data))
-        return mappings[topic]?.java.let { mapper.readValue(data, it) }
+        if (logger.isDebugEnabled) {
+            logger.debug("Deserializing message from topic {}: {}", topic, String(data))
+        }
+
+        return mappings[topic]?.invoke(data)
     }
 
     override fun close() = Unit

@@ -1,10 +1,10 @@
 package com.valensas.common.kafka.webflux.autoconfigure
 
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
-import com.valensas.common.kafka.webflux.deserializer.KafkaModelDeserializer
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
 import javax.annotation.PostConstruct
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.common.serialization.Deserializer
 import org.reactivestreams.Publisher
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
@@ -26,7 +26,7 @@ private fun <T, R> Flux<T>.flatMapSequential(concurrent: Boolean, mapper: (T) ->
 class KafkaConsumerRegisterer(
     private val kafkaProperties: KafkaProperties,
     private val consumers: List<KafkaConsumerDescriptor>,
-    private val kafkaModelDeserializer: KafkaModelDeserializer,
+    private val deserializer: Deserializer<Any>,
     private val customizers: List<ReceiverCustomizer>
 ) {
     @PostConstruct
@@ -36,7 +36,7 @@ class KafkaConsumerRegisterer(
         consumers.forEach { consumer ->
             val defaultOptions = ReceiverOptions
                 .create<String, Any>(consumerProps)
-                .withValueDeserializer(kafkaModelDeserializer)
+                .withValueDeserializer(deserializer)
                 .subscription(listOf(consumer.topic))
 
             val customizedOptions = customizers.fold(defaultOptions) { options, customizer ->
