@@ -8,6 +8,7 @@ class PayloadKafkaConsumerDescriptor<T : Any>(
     override val topic: String,
     override val modelType: KClass<T>,
     override val concurrent: Boolean = false,
+    override val wildcard: Boolean,
     private val consumer: (T) -> Publisher<Unit>
 ) : KafkaConsumerDescriptor {
     @Suppress("UNCHECKED_CAST")
