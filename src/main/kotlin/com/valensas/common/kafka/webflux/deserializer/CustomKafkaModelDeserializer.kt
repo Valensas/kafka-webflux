@@ -19,7 +19,8 @@ class CustomKafkaModelDeserializer(
             logger.debug("Deserializing message from topic {}: {}", topic, String(data))
         }
 
-        return mappings[topic]?.invoke(data)
+        val mapper = mappings[topic] ?: mappings.entries.find { (pattern, _) -> pattern.toRegex().matches(topic) }?.value
+        return mapper?.invoke(data)
     }
 
     override fun close() = Unit

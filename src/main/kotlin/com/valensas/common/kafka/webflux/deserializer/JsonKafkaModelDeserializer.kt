@@ -22,7 +22,8 @@ class JsonKafkaModelDeserializer(
             logger.debug("Deserializing message from topic {}: {}", topic, String(data))
         }
 
-        return mappings[topic]?.let { mapper.readValue(data, it.java) }
+        val targetClass = mappings[topic] ?: mappings.entries.find { (regex, _) -> regex.toRegex().matches(topic) }?.value
+        return targetClass?.let { mapper.readValue(data, it.java) }
     }
 
     override fun close() = Unit
