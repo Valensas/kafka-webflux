@@ -39,5 +39,5 @@ class JsonKafkaAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "spring.kafka.producer", name = ["bootstrap-servers"])
-    fun jsonSerializer() = JsonSerializer<Any>()
+    fun jsonSerializer(objectMapper: ObjectMapper) = JsonSerializer<Any>(objectMapper)
 }
