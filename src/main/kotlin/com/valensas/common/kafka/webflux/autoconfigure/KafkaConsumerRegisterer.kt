@@ -2,6 +2,8 @@ package com.valensas.common.kafka.webflux.autoconfigure
 
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
+import java.util.regex.Pattern
+import javax.annotation.PostConstruct
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.Deserializer
 import org.reactivestreams.Publisher
@@ -13,8 +15,6 @@ import reactor.kafka.receiver.KafkaReceiver
 import reactor.kafka.receiver.ReceiverOptions
 import reactor.kafka.receiver.ReceiverRecord
 import reactor.kotlin.core.publisher.toFlux
-import java.util.regex.Pattern
-import javax.annotation.PostConstruct
 
 private fun <T, R> Flux<T>.flatMapSequential(concurrent: Boolean, mapper: (T) -> Publisher<R>): Flux<R> =
     if (concurrent)

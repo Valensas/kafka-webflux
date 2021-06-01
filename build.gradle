@@ -99,6 +99,7 @@ dependencies {
     compile('org.jetbrains.kotlin:kotlin-stdlib-jdk8')
     compile('org.jetbrains.kotlin:kotlin-reflect')
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+    implementation("javax.annotation:javax.annotation-api:1.3.2")
 
     // Jackson
     compile('com.fasterxml.jackson.core:jackson-databind')
@@ -146,27 +147,6 @@ publishing {
             version = projectVersion
 
             from components.java
-
-            repositories {
-                if (project.hasProperty("AWS_REPO_URL")) {
-                    maven {
-                        url AWS_REPO_URL
-                        credentials(AwsCredentials) {
-                            accessKey AWS_REPO_ADMIN_ACCESS_KEY
-                            secretKey AWS_REPO_ADMIN_SECRET_KEY
-                        }
-                    }
-                }
-                if (project.hasProperty("MAVEN_REPO_URL")) {
-                    maven {
-                        url MAVEN_REPO_URL
-                        credentials {
-                            username = MAVEN_REPO_ADMIN_USERNAME
-                            password = MAVEN_REPO_ADMIN_PASSWORD
-                        }
-                    }
-                }
-            }
         }
     }
 }
