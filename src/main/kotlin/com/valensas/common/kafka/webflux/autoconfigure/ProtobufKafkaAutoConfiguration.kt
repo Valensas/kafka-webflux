@@ -4,7 +4,6 @@ import com.google.protobuf.Parser
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.deserializer.CustomKafkaModelDeserializer
 import com.valensas.common.kafka.webflux.serializer.ProtobufSerializer
-import kotlin.reflect.full.staticFunctions
 import org.apache.kafka.common.serialization.Deserializer
 import org.apache.kafka.common.serialization.Serializer
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
@@ -12,6 +11,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import kotlin.reflect.full.staticFunctions
 
 @Configuration
 @AutoConfigureBefore(KafkaProducerAutoConfiguration::class)

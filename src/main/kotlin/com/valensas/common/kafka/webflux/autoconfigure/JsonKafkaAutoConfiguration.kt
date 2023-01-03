@@ -3,7 +3,6 @@ package com.valensas.common.kafka.webflux.autoconfigure
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.deserializer.JsonKafkaModelDeserializer
-import kotlin.reflect.KClass
 import org.apache.kafka.common.serialization.Deserializer
 import org.springframework.boot.autoconfigure.AutoConfigureBefore
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
@@ -11,6 +10,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.support.serializer.JsonSerializer
+import kotlin.reflect.KClass
 
 @Configuration
 @AutoConfigureBefore(KafkaProducerAutoConfiguration::class)

@@ -1,8 +1,8 @@
 package com.valensas.common.kafka.webflux.consumer
 
-import kotlin.reflect.KClass
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.reactivestreams.Publisher
+import kotlin.reflect.KClass
 
 interface KafkaConsumerDescriptor {
     val topic: String

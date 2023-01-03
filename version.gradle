@@ -1,3 +1,0 @@
-ext.projectName = 'kafka-webflux'
-ext.projectGroup = 'com.valensas.common'
-ext.projectVersion = '0.0.14'
