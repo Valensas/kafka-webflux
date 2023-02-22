@@ -1,0 +1,11 @@
+[
+  {
+    "name": "reactor.kafka.sender.internals.DefaultKafkaSender",
+    "methods": [
+      {
+        "name": "close",
+        "parameterTypes": []
+      }
+    ]
+  }
+]
