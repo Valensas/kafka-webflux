@@ -32,7 +32,7 @@ class KafkaConsumerRegisterer(
     private val customizers: List<ReceiverCustomizer>
 ) {
     @PostConstruct
-    private fun registerConsumers() {
+    fun registerConsumers() {
         val consumerProps = kafkaProperties.buildConsumerProperties()
 
         consumers.forEach { consumer ->
