@@ -8,6 +8,7 @@ import org.reactivestreams.Publisher
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Configuration
+import reactor.core.Disposable
 import reactor.core.publisher.Flux
 import reactor.kafka.receiver.KafkaReceiver
 import reactor.kafka.receiver.ReceiverOptions
@@ -15,6 +16,7 @@ import reactor.kafka.receiver.ReceiverRecord
 import reactor.kotlin.core.publisher.toFlux
 import java.util.regex.Pattern
 import javax.annotation.PostConstruct
+import javax.annotation.PreDestroy
 
 private fun <T, R> Flux<T>.flatMapSequential(concurrent: Boolean, mapper: (T) -> Publisher<R>): Flux<R> =
     if (concurrent) {
@@ -31,11 +33,13 @@ class KafkaConsumerRegisterer(
     private val deserializer: Deserializer<Any>,
     private val customizers: List<ReceiverCustomizer>
 ) {
+    private var disposables = emptyList<Disposable>()
+
     @PostConstruct
     fun registerConsumers() {
         val consumerProps = kafkaProperties.buildConsumerProperties()
 
-        consumers.forEach { consumer ->
+        disposables = consumers.map { consumer ->
             val defaultOptions = ReceiverOptions
                 .create<String, Any>(consumerProps)
                 .withValueDeserializer(deserializer)
@@ -55,7 +59,12 @@ class KafkaConsumerRegisterer(
         }
     }
 
-    private fun subscribe(consumer: KafkaConsumerDescriptor, options: ReceiverOptions<String, Any>) {
+    @PreDestroy
+    fun destroy() {
+        disposables.forEach(Disposable::dispose)
+    }
+
+    private fun subscribe(consumer: KafkaConsumerDescriptor, options: ReceiverOptions<String, Any>): Disposable =
         stream(options)
             .groupBy(ConsumerRecord<String, Any>::partition)
             .flatMap { partitionFLux ->
@@ -68,11 +77,10 @@ class KafkaConsumerRegisterer(
                         .switchIfEmpty(Flux.just(record))
                 }
             }
-            .doOnNext {
+            .flatMap {
                 it.receiverOffset().commit()
             }
             .subscribe()
-    }
 
     private fun stream(options: ReceiverOptions<String, Any>): Flux<ReceiverRecord<String, Any>> =
         KafkaReceiver
