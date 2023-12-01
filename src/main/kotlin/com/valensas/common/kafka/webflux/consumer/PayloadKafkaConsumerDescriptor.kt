@@ -12,6 +12,5 @@ class PayloadKafkaConsumerDescriptor<T : Any>(
     private val consumer: (T) -> Publisher<Unit>
 ) : KafkaConsumerDescriptor {
     @Suppress("UNCHECKED_CAST")
-    override fun invoke(record: ConsumerRecord<*, *>): Publisher<Unit> =
-        consumer(record.value() as T)
+    override fun invoke(record: ConsumerRecord<*, *>): Publisher<Unit> = consumer(record.value() as T)
 }

@@ -19,9 +19,10 @@ class KafkaProducerAutoConfiguration {
         kafkaProperties: KafkaProperties,
         serializer: Serializer<Any>
     ): KafkaSender<String, Any> {
-        val properties = SenderOptions
-            .create<String, Any>(kafkaProperties.buildProducerProperties())
-            .withValueSerializer(serializer)
+        val properties =
+            SenderOptions
+                .create<String, Any>(kafkaProperties.buildProducerProperties())
+                .withValueSerializer(serializer)
 
         return KafkaSender.create(properties)
     }

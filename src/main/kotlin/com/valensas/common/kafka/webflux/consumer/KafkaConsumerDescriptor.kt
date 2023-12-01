@@ -9,5 +9,6 @@ interface KafkaConsumerDescriptor {
     val wildcard: Boolean
     val modelType: KClass<*>
     val concurrent: Boolean
+
     fun invoke(record: ConsumerRecord<*, *>): Publisher<Unit>
 }

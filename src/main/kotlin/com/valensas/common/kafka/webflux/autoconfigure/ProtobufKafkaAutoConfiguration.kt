@@ -20,9 +20,7 @@ class ProtobufKafkaAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["bootstrap-servers"])
-    fun protobufDeserializer(
-        consumers: List<KafkaConsumerDescriptor>
-    ): Deserializer<*> {
+    fun protobufDeserializer(consumers: List<KafkaConsumerDescriptor>): Deserializer<*> {
         val topicMappings = mutableMapOf<String, (ByteArray) -> Any>()
 
         consumers.forEach {
@@ -30,9 +28,10 @@ class ProtobufKafkaAutoConfiguration {
             if (existingClass != null && existingClass != it.modelType) {
                 throw IllegalStateException("Topic ${it.topic} registered with both $existingClass and ${it.modelType}")
             }
-            val parserMethod = it.modelType.staticFunctions.find {
-                it.name == "parser" && it.parameters.count() == 0
-            } ?: throw IllegalStateException("Class ${it.modelType.qualifiedName} does have a parser() static method.")
+            val parserMethod =
+                it.modelType.staticFunctions.find {
+                    it.name == "parser" && it.parameters.count() == 0
+                } ?: throw IllegalStateException("Class ${it.modelType.qualifiedName} does have a parser() static method.")
 
             val parser = parserMethod.call() as Parser<*>
 

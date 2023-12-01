@@ -18,7 +18,10 @@ import java.util.regex.Pattern
 import javax.annotation.PostConstruct
 import javax.annotation.PreDestroy
 
-private fun <T, R> Flux<T>.flatMapSequential(concurrent: Boolean, mapper: (T) -> Publisher<R>): Flux<R> =
+private fun <T, R> Flux<T>.flatMapSequential(
+    concurrent: Boolean,
+    mapper: (T) -> Publisher<R>
+): Flux<R> =
     if (concurrent) {
         flatMapSequential(mapper)
     } else {
@@ -39,24 +42,27 @@ class KafkaConsumerRegisterer(
     fun registerConsumers() {
         val consumerProps = kafkaProperties.buildConsumerProperties()
 
-        disposables = consumers.map { consumer ->
-            val defaultOptions = ReceiverOptions
-                .create<String, Any>(consumerProps)
-                .withValueDeserializer(deserializer)
-                .let {
-                    if (consumer.wildcard) {
-                        it.subscription(Pattern.compile(consumer.topic))
-                    } else {
-                        it.subscription(listOf(consumer.topic))
+        disposables =
+            consumers.map { consumer ->
+                val defaultOptions =
+                    ReceiverOptions
+                        .create<String, Any>(consumerProps)
+                        .withValueDeserializer(deserializer)
+                        .let {
+                            if (consumer.wildcard) {
+                                it.subscription(Pattern.compile(consumer.topic))
+                            } else {
+                                it.subscription(listOf(consumer.topic))
+                            }
+                        }
+
+                val customizedOptions =
+                    customizers.fold(defaultOptions) { options, customizer ->
+                        customizer.customize(options)
                     }
-                }
 
-            val customizedOptions = customizers.fold(defaultOptions) { options, customizer ->
-                customizer.customize(options)
+                subscribe(consumer, customizedOptions)
             }
-
-            subscribe(consumer, customizedOptions)
-        }
     }
 
     @PreDestroy
@@ -64,7 +70,10 @@ class KafkaConsumerRegisterer(
         disposables.forEach(Disposable::dispose)
     }
 
-    private fun subscribe(consumer: KafkaConsumerDescriptor, options: ReceiverOptions<String, Any>): Disposable =
+    private fun subscribe(
+        consumer: KafkaConsumerDescriptor,
+        options: ReceiverOptions<String, Any>
+    ): Disposable =
         stream(options)
             .groupBy(ConsumerRecord<String, Any>::partition)
             .flatMap { partitionFLux ->

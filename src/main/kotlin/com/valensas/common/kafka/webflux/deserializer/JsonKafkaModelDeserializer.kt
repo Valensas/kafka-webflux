@@ -12,9 +12,15 @@ class JsonKafkaModelDeserializer(
 ) : Deserializer<Any> {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
-    override fun configure(configs: MutableMap<String, *>?, isKey: Boolean) = Unit
+    override fun configure(
+        configs: MutableMap<String, *>?,
+        isKey: Boolean
+    ) = Unit
 
-    override fun deserialize(topic: String, data: ByteArray?): Any? {
+    override fun deserialize(
+        topic: String,
+        data: ByteArray?
+    ): Any? {
         if (data == null) {
             return null
         }
