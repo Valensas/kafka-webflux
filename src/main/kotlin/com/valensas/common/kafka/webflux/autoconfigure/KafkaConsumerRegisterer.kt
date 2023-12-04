@@ -2,6 +2,8 @@ package com.valensas.common.kafka.webflux.autoconfigure
 
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
+import jakarta.annotation.PostConstruct
+import jakarta.annotation.PreDestroy
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.Deserializer
 import org.reactivestreams.Publisher
@@ -15,8 +17,6 @@ import reactor.kafka.receiver.ReceiverOptions
 import reactor.kafka.receiver.ReceiverRecord
 import reactor.kotlin.core.publisher.toFlux
 import java.util.regex.Pattern
-import javax.annotation.PostConstruct
-import javax.annotation.PreDestroy
 
 private fun <T, R> Flux<T>.flatMapSequential(
     concurrent: Boolean,
@@ -40,7 +40,7 @@ class KafkaConsumerRegisterer(
 
     @PostConstruct
     fun registerConsumers() {
-        val consumerProps = kafkaProperties.buildConsumerProperties()
+        val consumerProps = kafkaProperties.buildConsumerProperties(null)
 
         disposables =
             consumers.map { consumer ->
