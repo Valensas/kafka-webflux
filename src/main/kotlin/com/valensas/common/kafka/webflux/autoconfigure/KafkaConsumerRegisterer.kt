@@ -1,12 +1,14 @@
 package com.valensas.common.kafka.webflux.autoconfigure
 
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
+import com.valensas.common.kafka.webflux.properties.HeaderPropagationProperties
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.common.serialization.Deserializer
 import org.reactivestreams.Publisher
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Configuration
@@ -36,6 +38,9 @@ class KafkaConsumerRegisterer(
     private val deserializer: Deserializer<Any>,
     private val customizers: List<ReceiverCustomizer>
 ) {
+    @Autowired(required = false)
+    private var headerPropagationProperties: HeaderPropagationProperties? = null
+
     private var disposables = emptyList<Disposable>()
 
     @PostConstruct
@@ -78,12 +83,26 @@ class KafkaConsumerRegisterer(
             .groupBy(ConsumerRecord<String, Any>::partition)
             .flatMap { partitionFLux ->
                 partitionFLux.flatMapSequential(consumer.concurrent) { record ->
+                    val headerPropagationProperties = this.headerPropagationProperties
+
                     consumer
                         .invoke(record)
                         .toFlux()
                         .retry()
                         .map { record }
                         .switchIfEmpty(Flux.just(record))
+                        .let {
+                            if (headerPropagationProperties == null) return@let it
+
+                            it.contextWrite { context ->
+                                val headersMap =
+                                    record.headers()
+                                        .filter { it.key() in headerPropagationProperties.headers }
+                                        .associate { it.key() to it.value().toString(Charsets.UTF_8) }
+
+                                context.put(headerPropagationProperties.contextKey, headersMap)
+                            }
+                        }
                 }
             }
             .flatMap {

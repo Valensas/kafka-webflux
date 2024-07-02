@@ -5,6 +5,7 @@ import org.apache.kafka.common.serialization.Serializer
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
+import org.springframework.boot.ssl.SslBundles
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import reactor.kafka.sender.KafkaSender
@@ -17,11 +18,12 @@ class KafkaProducerAutoConfiguration {
     @ConditionalOnMissingBean
     fun kafkaSender(
         kafkaProperties: KafkaProperties,
-        serializer: Serializer<Any>
+        serializer: Serializer<Any>,
+        sslBundles: SslBundles
     ): KafkaSender<String, Any> {
         val properties =
             SenderOptions
-                .create<String, Any>(kafkaProperties.buildProducerProperties())
+                .create<String, Any>(kafkaProperties.buildProducerProperties(sslBundles))
                 .withValueSerializer(serializer)
 
         return KafkaSender.create(properties)

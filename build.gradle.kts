@@ -11,7 +11,7 @@ plugins {
 }
 
 group = "com.valensas.data"
-version = "2.0.1"
+version = "2.1.0"
 java.sourceCompatibility = JavaVersion.VERSION_21
 
 repositories {
@@ -20,6 +20,7 @@ repositories {
 
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
+    api("org.springframework.boot:spring-boot-starter-webflux")
     api("org.springframework.kafka:spring-kafka")
     api("io.projectreactor.kafka:reactor-kafka")
     api("com.google.protobuf:protobuf-java:3.25.1")
@@ -60,6 +61,7 @@ publishing {
                 }
             }
         }
+        mavenLocal()
     }
 
     publications {
