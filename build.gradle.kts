@@ -11,8 +11,8 @@ plugins {
 }
 
 group = "com.valensas.data"
-version = "2.1.0"
-java.sourceCompatibility = JavaVersion.VERSION_21
+version = "2.1.1"
+java.sourceCompatibility = JavaVersion.VERSION_17
 
 repositories {
     mavenCentral()
@@ -38,7 +38,7 @@ dependencies {
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "21"
+        jvmTarget = "17"
     }
 }
 
