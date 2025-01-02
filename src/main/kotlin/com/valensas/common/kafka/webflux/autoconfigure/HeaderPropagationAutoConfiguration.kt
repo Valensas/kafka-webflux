@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.core.Ordered
 import org.springframework.core.annotation.Order
 import org.springframework.web.reactive.function.client.ClientRequest
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.ExchangeFunction
-import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.server.WebFilter
 import reactor.core.publisher.Mono
 
@@ -30,20 +30,19 @@ class HeaderPropagationAutoConfiguration() {
     }
 
     @Bean
-    fun webClientBuilder(headerPropagationProperties: HeaderPropagationProperties): WebClient.Builder {
-        return WebClient.builder()
-            .filter { clientRequest: ClientRequest, next: ExchangeFunction ->
-                Mono.deferContextual { context ->
-                    val newRequestBuilder = ClientRequest.from(clientRequest)
-                    headerPropagationProperties.headers.forEach { header ->
-                        context.getOrDefault(headerPropagationProperties.contextKey, emptyMap<String, String>()).let { headers ->
-                            headers?.get(header)?.let { headerValue ->
-                                newRequestBuilder.header(header, headerValue)
-                            }
+    fun headerPropagationExchangeFilter(headerPropagationProperties: HeaderPropagationProperties): ExchangeFilterFunction {
+        return ExchangeFilterFunction { clientRequest: ClientRequest, next: ExchangeFunction ->
+            Mono.deferContextual { context ->
+                val newRequestBuilder = ClientRequest.from(clientRequest)
+                headerPropagationProperties.headers.forEach { header ->
+                    context.getOrDefault(headerPropagationProperties.contextKey, emptyMap<String, String>()).let { headers ->
+                        headers?.get(header)?.let { headerValue ->
+                            newRequestBuilder.header(header, headerValue)
                         }
                     }
-                    next.exchange(newRequestBuilder.build())
                 }
+                next.exchange(newRequestBuilder.build())
             }
+        }
     }
 }
