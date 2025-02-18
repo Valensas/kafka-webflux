@@ -7,8 +7,8 @@ import java.time.Duration
 @ConfigurationProperties(prefix = "spring.kafka.retry")
 data class RetryConfigurationProperties(
     val type: RetryType = RetryType.Backoff,
-    val fixedDelay: FixedDelayProperties,
-    val backoff: BackoffProperties
+    val fixedDelay: FixedDelayProperties = FixedDelayProperties(),
+    val backoff: BackoffProperties = BackoffProperties()
 ) {
     enum class RetryType {
         FixedDelay,
