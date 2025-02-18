@@ -39,7 +39,8 @@ class KafkaConsumerRegisterer(
     private val kafkaProperties: KafkaProperties,
     private val consumers: List<KafkaConsumerDescriptor>,
     private val deserializer: Deserializer<Any>,
-    private val customizers: List<ReceiverCustomizer>
+    private val customizers: List<ReceiverCustomizer>,
+    private val retryConfigurationProperties: RetryConfigurationProperties
 ) {
     @Autowired(required = false)
     private var headerPropagationProperties: HeaderPropagationProperties? = null
@@ -91,7 +92,7 @@ class KafkaConsumerRegisterer(
                     consumer
                         .invoke(record)
                         .toFlux()
-                        .retry()
+                        .retryWhen(retryConfigurationProperties.build())
                         .map { record }
                         .switchIfEmpty(Flux.just(record))
                         .let {
