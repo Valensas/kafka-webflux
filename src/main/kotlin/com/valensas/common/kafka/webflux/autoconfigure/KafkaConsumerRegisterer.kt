@@ -2,6 +2,7 @@ package com.valensas.common.kafka.webflux.autoconfigure
 
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.properties.HeaderPropagationProperties
+import com.valensas.common.kafka.webflux.properties.RetryConfigurationProperties
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -11,6 +12,7 @@ import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Configuration
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
@@ -31,6 +33,7 @@ private fun <T, R> Flux<T>.flatMapSequential(
     }
 
 @Configuration
+@EnableConfigurationProperties(RetryConfigurationProperties::class)
 @ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["bootstrap-servers"])
 class KafkaConsumerRegisterer(
     private val kafkaProperties: KafkaProperties,
@@ -96,7 +99,8 @@ class KafkaConsumerRegisterer(
 
                             it.contextWrite { context ->
                                 val headersMap =
-                                    record.headers()
+                                    record
+                                        .headers()
                                         .filter { it.key() in headerPropagationProperties.headers }
                                         .associate { it.key() to it.value().toString(Charsets.UTF_8) }
 
@@ -104,11 +108,9 @@ class KafkaConsumerRegisterer(
                             }
                         }
                 }
-            }
-            .flatMap {
+            }.flatMap {
                 it.receiverOffset().commit()
-            }
-            .subscribe()
+            }.subscribe()
 
     private fun stream(options: ReceiverOptions<String, Any>): Flux<ReceiverRecord<String, Any>> =
         KafkaReceiver

@@ -18,9 +18,7 @@ fun <T : Any> Flux<T>.toKafka(
     key: String? = null,
     partition: Int? = null,
     customHeaders: Map<String, String>? = null
-): Flux<SenderResult<T>> {
-    return producer.send(topic, this, key, partition, customHeaders)
-}
+): Flux<SenderResult<T>> = producer.send(topic, this, key, partition, customHeaders)
 
 fun <T : Any> Mono<T>.toKafka(
     topic: String,
@@ -28,9 +26,7 @@ fun <T : Any> Mono<T>.toKafka(
     key: String? = null,
     partition: Int? = null,
     customHeaders: Map<String, String>? = null
-): Flux<SenderResult<T>> {
-    return producer.send(topic, this, key, partition, customHeaders)
-}
+): Flux<SenderResult<T>> = producer.send(topic, this, key, partition, customHeaders)
 
 @Service
 class KafkaProducer(
@@ -82,7 +78,8 @@ class KafkaProducer(
                 context.getOrDefault<Map<String, String>>(kafkaHeaderPropagationProperties.contextKey, emptyMap()).toMono()
             }
 
-        return Flux.zip(flux, headersMono)
+        return Flux
+            .zip(flux, headersMono)
             .map {
                 val combinedHeaders = it.t2.toMutableMap()
                 customHeaders?.forEach { (k, v) ->
@@ -112,7 +109,8 @@ class KafkaProducer(
                 context.getOrDefault<Map<String, String>>(kafkaHeaderPropagationProperties.contextKey, emptyMap()).toMono()
             }
 
-        return Mono.zip(flux, headersMono)
+        return Mono
+            .zip(flux, headersMono)
             .map { zipped ->
                 val combinedHeaders = zipped.t2.toMutableMap()
                 customHeaders?.forEach { (k, v) ->

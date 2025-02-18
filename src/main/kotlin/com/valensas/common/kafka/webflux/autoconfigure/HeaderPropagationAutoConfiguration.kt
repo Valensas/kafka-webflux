@@ -22,16 +22,15 @@ import reactor.core.publisher.Mono
     havingValue = "true",
     matchIfMissing = true
 )
-class HeaderPropagationAutoConfiguration() {
+class HeaderPropagationAutoConfiguration {
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun headerPropagationFilter(headerPropagationProperties: HeaderPropagationProperties): WebFilter {
-        return HeaderExtractorFilter(headerPropagationProperties)
-    }
+    fun headerPropagationFilter(headerPropagationProperties: HeaderPropagationProperties): WebFilter =
+        HeaderExtractorFilter(headerPropagationProperties)
 
     @Bean
-    fun headerPropagationExchangeFilter(headerPropagationProperties: HeaderPropagationProperties): ExchangeFilterFunction {
-        return ExchangeFilterFunction { clientRequest: ClientRequest, next: ExchangeFunction ->
+    fun headerPropagationExchangeFilter(headerPropagationProperties: HeaderPropagationProperties): ExchangeFilterFunction =
+        ExchangeFilterFunction { clientRequest: ClientRequest, next: ExchangeFunction ->
             Mono.deferContextual { context ->
                 val newRequestBuilder = ClientRequest.from(clientRequest)
                 headerPropagationProperties.headers.forEach { header ->
@@ -44,5 +43,4 @@ class HeaderPropagationAutoConfiguration() {
                 next.exchange(newRequestBuilder.build())
             }
         }
-    }
 }

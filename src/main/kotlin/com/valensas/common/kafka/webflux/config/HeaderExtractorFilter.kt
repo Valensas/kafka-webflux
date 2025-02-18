@@ -22,8 +22,9 @@ class HeaderExtractorFilter(
             }
         }
 
-        return chain.filter(
-            exchange
-        ).contextWrite(Context.of(headerPropagationProperties.contextKey, propagatedHeaders))
+        return chain
+            .filter(
+                exchange
+            ).contextWrite(Context.of(headerPropagationProperties.contextKey, propagatedHeaders))
     }
 }
