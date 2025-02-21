@@ -117,6 +117,7 @@ class KafkaConsumerRegisterer(
         KafkaReceiver
             .create(options)
             .receive()
+            .retryWhen(retryConfigurationProperties.build())
             .onErrorResume {
                 stream(options)
             }
