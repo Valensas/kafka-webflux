@@ -9,6 +9,7 @@ plugins {
     id("java-library")
     kotlin("jvm") version "2.0.21"
     kotlin("plugin.spring") version "2.1.10"
+    id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
 }
 
 group = "com.valensas.data"
@@ -40,6 +41,9 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.kafka:spring-kafka-test")
 }
 
 tasks.withType<Test> {
@@ -47,26 +51,50 @@ tasks.withType<Test> {
 }
 
 publishing {
-    repositories {
-        if (System.getenv("CI_API_V4_URL") != null) {
-            maven {
-                name = "Gitlab"
-                url = uri("${System.getenv("CI_API_V4_URL")}/projects/${System.getenv("CI_PROJECT_ID")}/packages/maven")
-                credentials(HttpHeaderCredentials::class.java) {
-                    name = "Job-Token"
-                    value = System.getenv("CI_JOB_TOKEN")
-                }
-                authentication {
-                    create("header", HttpHeaderAuthentication::class)
-                }
-            }
+    publications {
+        create("library", MavenPublication::class.java) {
+            artifactId = "kafka-webflux"
+            from(components["java"])
         }
+    }
+    repositories {
         mavenLocal()
     }
+}
 
-    publications {
-        create<MavenPublication>("artifact") {
-            from(components["java"])
+signing {
+    val keyId = System.getenv("SIGNING_KEYID")
+    val secretKey = System.getenv("SIGNING_SECRETKEY")
+    val passphrase = System.getenv("SIGNING_PASSPHRASE")
+
+    useInMemoryPgpKeys(keyId, secretKey, passphrase)
+}
+
+centralPortal {
+    name = "kafka-webflux"
+    username = System.getenv("SONATYPE_USERNAME")
+    password = System.getenv("SONATYPE_PASSWORD")
+    pom {
+        name = "Kafka Webflux"
+        description = "A reactive Kafka library for Spring Boot WebFlux."
+        url = "https://valensas.com/"
+        scm {
+            url = "https://github.com/Valensas/kafka-webflux"
+        }
+
+        licenses {
+            license {
+                name.set("MIT License")
+                url.set("https://mit-license.org")
+            }
+        }
+
+        developers {
+            developer {
+                id.set("0")
+                name.set("Valensas")
+                email.set("info@valensas.com")
+            }
         }
     }
 }

@@ -1,0 +1,41 @@
+name: Verify
+on:
+  pull_request:
+  workflow_call:
+  push:
+    branches: ["**"]
+    # Don't run on tags, publish will call this workflow
+    tags-ignore: ["**"]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup java
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "21"
+          distribution: graalvm
+          cache: "gradle"
+      - name: Lint
+        run: ./gradlew lintKotlin
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: setup java
+        uses: graalvm/setup-graalvm@v1
+        with:
+          java-version: "21"
+          distribution: graalvm
+          cache: "gradle"
+      - name: Test
+        run: ./gradlew test
+      - name: Check version not present
+        run: |
+          GRADLE_VERSION=$(./gradlew properties | grep '^version:' | awk '{print $2}')
+          if [ "$GRADLE_VERSION" != "unspecified" ]; then
+            echo "ERROR - build.gradle(.kts) has a hardcoded version ($GRADLE_VERSION). No version is allowed in build.gradle(.kts)"
+            exit 1
+          fi
