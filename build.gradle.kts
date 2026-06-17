@@ -2,18 +2,20 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("io.spring.dependency-management") version "1.1.7"
-    id("org.jmailen.kotlinter") version "5.0.1"
-    id("com.github.ben-manes.versions") version "0.52.0"
+    id("org.jmailen.kotlinter") version "5.5.0"
+    id("com.github.ben-manes.versions") version "0.54.0"
     id("maven-publish")
     id("java-library")
-    kotlin("jvm") version "2.0.21"
-    kotlin("plugin.spring") version "2.1.10"
+    kotlin("jvm") version "2.4.0"
+    kotlin("plugin.spring") version "2.4.0"
     id("net.thebugmc.gradle.sonatype-central-portal-publisher") version "1.2.4"
 }
 
 group = "com.valensas.data"
 
-java.sourceCompatibility = JavaVersion.VERSION_17
+java.sourceCompatibility = JavaVersion.VERSION_21
+
+extra["kotlin.version"] = "2.4.0"
 
 repositories {
     mavenCentral()
@@ -21,7 +23,7 @@ repositories {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_21)
     }
 }
 
@@ -47,7 +49,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.4.2")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.15")
     }
 }
 

@@ -25,12 +25,11 @@ import java.util.regex.Pattern
 private fun <T, R> Flux<T>.flatMapSequential(
     concurrent: Boolean,
     mapper: (T) -> Publisher<R>
-): Flux<R> =
-    if (concurrent) {
-        flatMapSequential(mapper)
-    } else {
-        flatMapSequential(mapper, 1)
-    }
+): Flux<R> = if (concurrent) {
+    flatMapSequential(mapper)
+} else {
+    flatMapSequential(mapper, 1)
+}
 
 @Configuration
 @EnableConfigurationProperties(RetryConfigurationProperties::class)
@@ -82,43 +81,41 @@ class KafkaConsumerRegisterer(
     private fun subscribe(
         consumer: KafkaConsumerDescriptor,
         options: ReceiverOptions<String, Any>
-    ): Disposable =
-        stream(options)
-            .groupBy(ConsumerRecord<String, Any>::partition)
-            .flatMap { partitionFLux ->
-                partitionFLux.flatMapSequential(consumer.concurrent) { record ->
-                    val headerPropagationProperties = this.headerPropagationProperties
+    ): Disposable = stream(options)
+        .groupBy(ConsumerRecord<String, Any>::partition)
+        .flatMap { partitionFLux ->
+            partitionFLux.flatMapSequential(consumer.concurrent) { record ->
+                val headerPropagationProperties = this.headerPropagationProperties
 
-                    consumer
-                        .invoke(record)
-                        .toFlux()
-                        .retryWhen(retryConfigurationProperties.build())
-                        .map { record }
-                        .switchIfEmpty(Flux.just(record))
-                        .let {
-                            if (headerPropagationProperties == null) return@let it
+                consumer
+                    .invoke(record)
+                    .toFlux()
+                    .retryWhen(retryConfigurationProperties.build())
+                    .map { record }
+                    .switchIfEmpty(Flux.just(record))
+                    .let {
+                        if (headerPropagationProperties == null) return@let it
 
-                            it.contextWrite { context ->
-                                val headersMap =
-                                    record
-                                        .headers()
-                                        .filter { it.key() in headerPropagationProperties.headers }
-                                        .associate { it.key() to it.value().toString(Charsets.UTF_8) }
+                        it.contextWrite { context ->
+                            val headersMap =
+                                record
+                                    .headers()
+                                    .filter { it.key() in headerPropagationProperties.headers }
+                                    .associate { it.key() to it.value().toString(Charsets.UTF_8) }
 
-                                context.put(headerPropagationProperties.contextKey, headersMap)
-                            }
+                            context.put(headerPropagationProperties.contextKey, headersMap)
                         }
-                }
-            }.flatMap {
-                it.receiverOffset().commit()
-            }.subscribe()
-
-    private fun stream(options: ReceiverOptions<String, Any>): Flux<ReceiverRecord<String, Any>> =
-        KafkaReceiver
-            .create(options)
-            .receive()
-            .retryWhen(retryConfigurationProperties.build())
-            .onErrorResume {
-                stream(options)
+                    }
             }
+        }.flatMap {
+            it.receiverOffset().commit()
+        }.subscribe()
+
+    private fun stream(options: ReceiverOptions<String, Any>): Flux<ReceiverRecord<String, Any>> = KafkaReceiver
+        .create(options)
+        .receive()
+        .retryWhen(retryConfigurationProperties.build())
+        .onErrorResume {
+            stream(options)
+        }
 }

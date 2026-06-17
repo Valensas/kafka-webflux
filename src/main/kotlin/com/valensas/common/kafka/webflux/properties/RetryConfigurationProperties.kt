@@ -27,10 +27,9 @@ data class RetryConfigurationProperties(
         val maxBackoff: Duration = Duration.ofMinutes(1)
     )
 
-    fun build(): Retry =
-        when (type) {
-            RetryType.FixedDelay -> Retry.fixedDelay(fixedDelay.maxAttempts, fixedDelay.delay)
-            RetryType.Backoff -> Retry.backoff(backoff.maxAttempts, backoff.minBackoff).maxBackoff(backoff.maxBackoff)
-            RetryType.Indefinitely -> Retry.indefinitely()
-        }
+    fun build(): Retry = when (type) {
+        RetryType.FixedDelay -> Retry.fixedDelay(fixedDelay.maxAttempts, fixedDelay.delay)
+        RetryType.Backoff -> Retry.backoff(backoff.maxAttempts, backoff.minBackoff).maxBackoff(backoff.maxBackoff)
+        RetryType.Indefinitely -> Retry.indefinitely()
+    }
 }
