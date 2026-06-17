@@ -25,22 +25,20 @@ import reactor.core.publisher.Mono
 class HeaderPropagationAutoConfiguration {
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
-    fun headerPropagationFilter(headerPropagationProperties: HeaderPropagationProperties): WebFilter =
-        HeaderExtractorFilter(headerPropagationProperties)
+    fun headerPropagationFilter(headerPropagationProperties: HeaderPropagationProperties): WebFilter = HeaderExtractorFilter(headerPropagationProperties)
 
     @Bean
-    fun headerPropagationExchangeFilter(headerPropagationProperties: HeaderPropagationProperties): ExchangeFilterFunction =
-        ExchangeFilterFunction { clientRequest: ClientRequest, next: ExchangeFunction ->
-            Mono.deferContextual { context ->
-                val newRequestBuilder = ClientRequest.from(clientRequest)
-                headerPropagationProperties.headers.forEach { header ->
-                    context.getOrDefault(headerPropagationProperties.contextKey, emptyMap<String, String>()).let { headers ->
-                        headers?.get(header)?.let { headerValue ->
-                            newRequestBuilder.header(header, headerValue)
-                        }
+    fun headerPropagationExchangeFilter(headerPropagationProperties: HeaderPropagationProperties): ExchangeFilterFunction = ExchangeFilterFunction { clientRequest: ClientRequest, next: ExchangeFunction ->
+        Mono.deferContextual { context ->
+            val newRequestBuilder = ClientRequest.from(clientRequest)
+            headerPropagationProperties.headers.forEach { header ->
+                context.getOrDefault(headerPropagationProperties.contextKey, emptyMap<String, String>()).let { headers ->
+                    headers?.get(header)?.let { headerValue ->
+                        newRequestBuilder.header(header, headerValue)
                     }
                 }
-                next.exchange(newRequestBuilder.build())
             }
+            next.exchange(newRequestBuilder.build())
         }
+    }
 }
