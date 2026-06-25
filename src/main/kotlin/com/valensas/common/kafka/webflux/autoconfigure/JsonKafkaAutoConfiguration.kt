@@ -1,6 +1,5 @@
 package com.valensas.common.kafka.webflux.autoconfigure
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.deserializer.JsonKafkaModelDeserializer
 import org.apache.kafka.common.serialization.Deserializer
@@ -9,7 +8,8 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.kafka.support.serializer.JsonSerializer
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer
+import tools.jackson.databind.json.JsonMapper
 import kotlin.reflect.KClass
 
 @Configuration
@@ -21,7 +21,7 @@ class JsonKafkaAutoConfiguration {
     @ConditionalOnProperty(prefix = "spring.kafka.consumer", name = ["bootstrap-servers"])
     fun jsonDeserializer(
         consumers: List<KafkaConsumerDescriptor>,
-        objectMapper: ObjectMapper
+        jsonMapper: JsonMapper
     ): Deserializer<*> {
         val topicMappings = mutableMapOf<String, KClass<*>>()
 
@@ -33,11 +33,11 @@ class JsonKafkaAutoConfiguration {
             topicMappings[it.topic] = it.modelType
         }
 
-        return JsonKafkaModelDeserializer(topicMappings, objectMapper)
+        return JsonKafkaModelDeserializer(topicMappings, jsonMapper)
     }
 
     @Bean
     @ConditionalOnMissingBean
     @ConditionalOnProperty(prefix = "spring.kafka.producer", name = ["bootstrap-servers"])
-    fun jsonSerializer(objectMapper: ObjectMapper) = JsonSerializer<Any>(objectMapper)
+    fun jsonSerializer(jsonMapper: JsonMapper) = JacksonJsonSerializer<Any>(jsonMapper)
 }

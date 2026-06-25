@@ -11,8 +11,8 @@ import org.apache.kafka.common.serialization.Deserializer
 import org.reactivestreams.Publisher
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.boot.context.properties.EnableConfigurationProperties
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties
 import org.springframework.context.annotation.Configuration
 import reactor.core.Disposable
 import reactor.core.publisher.Flux
@@ -22,7 +22,7 @@ import reactor.kafka.receiver.ReceiverRecord
 import reactor.kotlin.core.publisher.toFlux
 import java.util.regex.Pattern
 
-private fun <T, R> Flux<T>.flatMapSequential(
+private fun <T : Any, R : Any> Flux<T>.flatMapSequential(
     concurrent: Boolean,
     mapper: (T) -> Publisher<R>
 ): Flux<R> = if (concurrent) {
@@ -48,7 +48,7 @@ class KafkaConsumerRegisterer(
 
     @PostConstruct
     fun registerConsumers() {
-        val consumerProps = kafkaProperties.buildConsumerProperties(null)
+        val consumerProps = kafkaProperties.buildConsumerProperties()
 
         disposables =
             consumers.map { consumer ->
