@@ -13,7 +13,7 @@ plugins {
 
 group = "com.valensas.data"
 
-java.sourceCompatibility = JavaVersion.VERSION_21
+java.sourceCompatibility = JavaVersion.VERSION_25
 
 extra["kotlin.version"] = "2.4.0"
 
@@ -23,7 +23,7 @@ repositories {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_21)
+        jvmTarget.set(JvmTarget.JVM_25)
     }
 }
 
@@ -31,14 +31,14 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter")
     api("org.springframework.boot:spring-boot-starter-webflux")
     api("org.springframework.kafka:spring-kafka")
-    api("io.projectreactor.kafka:reactor-kafka")
+    api("org.springframework.boot:spring-boot-kafka")
+    api("io.projectreactor.kafka:reactor-kafka:1.3.25")
     api("com.google.protobuf:protobuf-java:4.29.3")
-    api("com.fasterxml.jackson.core:jackson-databind")
+    api("tools.jackson.core:jackson-databind")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    implementation("jakarta.annotation:jakarta.annotation-api:3.0.0")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("tools.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
@@ -49,7 +49,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:3.5.15")
+        mavenBom("org.springframework.boot:spring-boot-dependencies:4.1.0")
     }
 }
 
