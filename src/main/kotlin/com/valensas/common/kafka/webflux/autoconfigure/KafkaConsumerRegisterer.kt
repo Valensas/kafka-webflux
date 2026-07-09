@@ -3,6 +3,7 @@ package com.valensas.common.kafka.webflux.autoconfigure
 import com.valensas.common.kafka.webflux.consumer.KafkaConsumerDescriptor
 import com.valensas.common.kafka.webflux.properties.HeaderPropagationProperties
 import com.valensas.common.kafka.webflux.properties.RetryConfigurationProperties
+import com.valensas.common.kafka.webflux.tracing.KafkaTracing
 import com.valensas.common.kafka.webflux.util.ReceiverCustomizer
 import jakarta.annotation.PostConstruct
 import jakarta.annotation.PreDestroy
@@ -43,6 +44,9 @@ class KafkaConsumerRegisterer(
 ) {
     @Autowired(required = false)
     private var headerPropagationProperties: HeaderPropagationProperties? = null
+
+    @Autowired(required = false)
+    private var kafkaTracing: KafkaTracing? = null
 
     private var disposables = emptyList<Disposable>()
 
@@ -87,25 +91,28 @@ class KafkaConsumerRegisterer(
             partitionFLux.flatMapSequential(consumer.concurrent) { record ->
                 val headerPropagationProperties = this.headerPropagationProperties
 
-                consumer
-                    .invoke(record)
-                    .toFlux()
-                    .retryWhen(retryConfigurationProperties.build())
-                    .map { record }
-                    .switchIfEmpty(Flux.just(record))
-                    .let {
-                        if (headerPropagationProperties == null) return@let it
+                val processing =
+                    consumer
+                        .invoke(record)
+                        .toFlux()
+                        .retryWhen(retryConfigurationProperties.build())
+                        .map { record }
+                        .switchIfEmpty(Flux.just(record))
+                        .let {
+                            if (headerPropagationProperties == null) return@let it
 
-                        it.contextWrite { context ->
-                            val headersMap =
-                                record
-                                    .headers()
-                                    .filter { it.key() in headerPropagationProperties.headers }
-                                    .associate { it.key() to it.value().toString(Charsets.UTF_8) }
+                            it.contextWrite { context ->
+                                val headersMap =
+                                    record
+                                        .headers()
+                                        .filter { it.key() in headerPropagationProperties.headers }
+                                        .associate { it.key() to it.value().toString(Charsets.UTF_8) }
 
-                            context.put(headerPropagationProperties.contextKey, headersMap)
+                                context.put(headerPropagationProperties.contextKey, headersMap)
+                            }
                         }
-                    }
+
+                kafkaTracing?.traceConsume(record.topic(), record.headers(), processing) ?: processing
             }
         }.flatMap {
             it.receiverOffset().commit()

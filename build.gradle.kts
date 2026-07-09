@@ -43,8 +43,12 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
 
+    compileOnly("io.opentelemetry:opentelemetry-api")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.kafka:spring-kafka-test")
+    testImplementation("io.opentelemetry:opentelemetry-sdk-testing")
+    testImplementation("io.opentelemetry.instrumentation:opentelemetry-reactor-3.1:2.28.0-alpha")
 }
 
 dependencyManagement {

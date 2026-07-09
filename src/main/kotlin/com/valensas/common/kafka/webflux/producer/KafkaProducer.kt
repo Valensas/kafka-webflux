@@ -1,6 +1,7 @@
 package com.valensas.common.kafka.webflux.producer
 
 import com.valensas.common.kafka.webflux.properties.HeaderPropagationProperties
+import com.valensas.common.kafka.webflux.tracing.KafkaTracing
 import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.header.internals.RecordHeader
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,6 +12,7 @@ import reactor.kafka.sender.KafkaSender
 import reactor.kafka.sender.SenderRecord
 import reactor.kafka.sender.SenderResult
 import reactor.kotlin.core.publisher.toMono
+import reactor.util.context.ContextView
 
 fun <T : Any> Flux<T>.toKafka(
     topic: String,
@@ -35,6 +37,9 @@ class KafkaProducer(
     @Autowired(required = false)
     private val kafkaHeaderPropagationProperties: HeaderPropagationProperties? = null
 
+    @Autowired(required = false)
+    private var kafkaTracing: KafkaTracing? = null
+
     fun <T : Any> send(
         topic: String,
         data: Mono<T>,
@@ -44,7 +49,9 @@ class KafkaProducer(
     ): Flux<SenderResult<T>> {
         @Suppress("UNCHECKED_CAST")
         val sender = this.sender as KafkaSender<String, T>
-        return sender.send(toSenderRecord(topic, data, key, partition, customHeaders))
+        return Flux.deferContextual { context ->
+            sender.send(toSenderRecord(topic, data, context, key, partition, customHeaders))
+        }
     }
 
     fun <T : Any> send(
@@ -56,12 +63,28 @@ class KafkaProducer(
     ): Flux<SenderResult<T>> {
         @Suppress("UNCHECKED_CAST")
         val sender = this.sender as KafkaSender<String, T>
-        return sender.send(toSenderRecord(topic, data, key, partition, customHeaders))
+        return Flux.deferContextual { context ->
+            sender.send(toSenderRecord(topic, data, context, key, partition, customHeaders))
+        }
+    }
+
+    private fun <T : Any> senderRecord(
+        topic: String,
+        partition: Int?,
+        key: String?,
+        value: T,
+        headers: List<RecordHeader>,
+        context: ContextView
+    ): SenderRecord<String, T, T> {
+        val record: ProducerRecord<String, T> = ProducerRecord(topic, partition, key, value, headers)
+        kafkaTracing?.produce(topic, context, record.headers())
+        return SenderRecord.create(record, value)
     }
 
     private fun <T : Any> toSenderRecord(
         topic: String,
         flux: Flux<T>,
+        context: ContextView,
         key: String? = null,
         partition: Int? = null,
         customHeaders: Map<String, String>? = null
@@ -69,13 +92,13 @@ class KafkaProducer(
         if (kafkaHeaderPropagationProperties == null) {
             return flux.map {
                 val headers = customHeaders?.map { (k, v) -> RecordHeader(k, v.toByteArray(Charsets.UTF_8)) } ?: emptyList()
-                SenderRecord.create(ProducerRecord(topic, partition, key, it, headers), it)
+                senderRecord(topic, partition, key, it, headers, context)
             }
         }
 
         val headersMono =
-            this.toMono().transformDeferredContextual { _, context ->
-                context.getOrDefault<Map<String, String>>(kafkaHeaderPropagationProperties.contextKey, emptyMap()).toMono()
+            this.toMono().transformDeferredContextual { _, ctx ->
+                ctx.getOrDefault<Map<String, String>>(kafkaHeaderPropagationProperties.contextKey, emptyMap()).toMono()
             }
 
         return Flux
@@ -86,13 +109,14 @@ class KafkaProducer(
                     combinedHeaders[k] = v
                 }
                 val recordHeaders = combinedHeaders.map { (k, v) -> RecordHeader(k, v.toByteArray(Charsets.UTF_8)) }
-                SenderRecord.create(ProducerRecord(topic, partition, key, it.t1, recordHeaders), it.t1)
+                senderRecord(topic, partition, key, it.t1, recordHeaders, context)
             }
     }
 
     private fun <T : Any> toSenderRecord(
         topic: String,
         flux: Mono<T>,
+        context: ContextView,
         key: String? = null,
         partition: Int? = null,
         customHeaders: Map<String, String>? = null
@@ -100,13 +124,13 @@ class KafkaProducer(
         if (kafkaHeaderPropagationProperties == null) {
             return flux.map {
                 val headers = customHeaders?.map { (k, v) -> RecordHeader(k, v.toByteArray(Charsets.UTF_8)) } ?: emptyList()
-                SenderRecord.create(ProducerRecord(topic, partition, key, it, headers), it)
+                senderRecord(topic, partition, key, it, headers, context)
             }
         }
 
         val headersMono =
-            this.toMono().transformDeferredContextual { _, context ->
-                context.getOrDefault<Map<String, String>>(kafkaHeaderPropagationProperties.contextKey, emptyMap()).toMono()
+            this.toMono().transformDeferredContextual { _, ctx ->
+                ctx.getOrDefault<Map<String, String>>(kafkaHeaderPropagationProperties.contextKey, emptyMap()).toMono()
             }
 
         return Mono
@@ -117,7 +141,7 @@ class KafkaProducer(
                     combinedHeaders[k] = v
                 }
                 val recordHeaders = combinedHeaders.map { (k, v) -> RecordHeader(k, v.toByteArray(Charsets.UTF_8)) }
-                SenderRecord.create(ProducerRecord(topic, partition, key, zipped.t1, recordHeaders), zipped.t1)
+                senderRecord(topic, partition, key, zipped.t1, recordHeaders, context)
             }
     }
 }
