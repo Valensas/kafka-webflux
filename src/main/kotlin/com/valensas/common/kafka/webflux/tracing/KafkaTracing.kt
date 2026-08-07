@@ -62,6 +62,8 @@ class KafkaTracing(
     }
 
     companion object {
+        const val OTEL_CONTEXT_KEY = "com.valensas.kafka-webflux.otel-context"
+
         private const val INSTRUMENTATION_NAME = "com.valensas.kafka-webflux"
 
         private const val BRIDGE = "io.opentelemetry.instrumentation.reactor.v3_1.ContextPropagationOperator"
@@ -80,9 +82,13 @@ class KafkaTracing(
             reactorContext: ReactorContext,
             otelContext: Context
         ): ReactorContext {
-            val method = storeContextMethod ?: return reactorContext
-            return runCatching { method.invoke(null, reactorContext, otelContext) as ReactorContext }
-                .getOrDefault(reactorContext)
+            val bridged =
+                storeContextMethod
+                    ?.let { method ->
+                        runCatching { method.invoke(null, reactorContext, otelContext) as ReactorContext }
+                            .getOrDefault(reactorContext)
+                    } ?: reactorContext
+            return bridged.put(OTEL_CONTEXT_KEY, otelContext)
         }
 
         private fun getOpenTelemetryContext(contextView: ContextView): Context {
